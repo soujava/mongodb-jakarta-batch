@@ -1,17 +1,21 @@
 package expert.os.demos.ecommerce;
 
+import expert.os.demos.ecommerce.batch.SegmentationThresholds;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
-import jakarta.nosql.Template;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.util.Arrays;
+import java.math.BigDecimal;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 @ApplicationScoped
 public class CustomerDataService {
@@ -20,22 +24,24 @@ public class CustomerDataService {
     private static final String CUSTOMERS_JSON = "/customers.json";
 
     @Inject
-    private Template template;
+    private CustomerRepository customerRepository;
 
-    private List<Customer> loadCustomers() throws Exception {
+    List<Customer> loadCustomers() {
         try (InputStream stream =
-                     CustomerDataService.class.getResourceAsStream(CUSTOMERS_JSON);
-             Jsonb jsonb = JsonbBuilder.create()) {
+                     CustomerDataService.class.getResourceAsStream(CUSTOMERS_JSON)) {
 
             if (stream == null) {
                 throw new IllegalStateException(
                         "Resource not found: " + CUSTOMERS_JSON);
             }
 
-            Customer[] customers =
-                    jsonb.fromJson(stream, Customer[].class);
+            Jsonb jsonb = JsonbBuilder.create();
+            CustomerSeed[] customers =
+                    jsonb.fromJson(stream, CustomerSeed[].class);
 
-            return Arrays.asList(customers);
+            return List.of(customers).stream()
+                    .map(CustomerSeed::toCustomer)
+                    .toList();
 
         } catch (IOException exception) {
             throw new UncheckedIOException(
@@ -43,16 +49,133 @@ public class CustomerDataService {
         }
     }
 
-    void saveCustomers() throws Exception {
-        if (template.select(Customer.class).limit(1).singleResult().isPresent()) {
-            LOGGER.info("Customer data already exists; skipping import");
-            return;
+    public void initializeIfEmpty() {
+        try (Stream<Customer> customers = customerRepository.findAll()) {
+            if (customers.findAny().isPresent()) {
+                LOGGER.info("Customer data already exists; skipping import");
+                return;
+            }
         }
 
         List<Customer> customers = loadCustomers();
-        template.insert(customers);
+        customerRepository.saveAll(customers);
 
         LOGGER.info(() -> "Customer import completed: created=%d"
                 .formatted(customers.size()));
+    }
+
+    public Map<CustomerTier, Long> countByTier() {
+        return statistics().tierCounts();
+    }
+
+    public CustomerStatistics statistics() {
+        try (Stream<Customer> customers = customerRepository.findAll()) {
+            return summarize(customers.toList());
+        }
+    }
+
+    public SegmentationPreview segmentationPreview(SegmentationThresholds thresholds) {
+        Objects.requireNonNull(thresholds, "thresholds are required");
+
+        try (Stream<Customer> customers = customerRepository.findAll()) {
+            return calculatePreview(customers::iterator, thresholds);
+        }
+    }
+
+    static CustomerStatistics summarize(List<Customer> customers) {
+        EnumMap<CustomerTier, Long> counts = new EnumMap<>(CustomerTier.class);
+        for (CustomerTier tier : CustomerTier.values()) {
+            counts.put(tier, 0L);
+        }
+
+        long unclassifiedCustomers = 0;
+        for (Customer customer : customers) {
+            CustomerTier tier = customer.getTier();
+            if (tier == null) {
+                unclassifiedCustomers++;
+                continue;
+            }
+
+            counts.merge(tier, 1L, Long::sum);
+        }
+
+        if (unclassifiedCustomers > 0) {
+            long count = unclassifiedCustomers;
+            LOGGER.warning(() -> "Found %d customers without a tier"
+                    .formatted(count));
+        }
+
+        return new CustomerStatistics(customers.size(), counts);
+    }
+
+    static SegmentationPreview calculatePreview(
+            Iterable<Customer> customers,
+            SegmentationThresholds thresholds) {
+
+        EnumMap<CustomerTier, Long> currentCounts = emptyTierCounts();
+        EnumMap<CustomerTier, Long> projectedCounts = emptyTierCounts();
+
+        long totalCustomers = 0;
+        for (Customer customer : customers) {
+            CustomerTier currentTier = customer.getTier();
+            if (currentTier != null) {
+                currentCounts.merge(currentTier, 1L, Long::sum);
+            }
+
+            CustomerTier projectedTier = thresholds.tierFor(customer.getTotalSpent());
+            projectedCounts.merge(projectedTier, 1L, Long::sum);
+            totalCustomers++;
+        }
+
+        CustomerStatistics current =
+                new CustomerStatistics(totalCustomers, currentCounts);
+        CustomerStatistics projected =
+                new CustomerStatistics(totalCustomers, projectedCounts);
+        return new SegmentationPreview(current, projected);
+    }
+
+    private static EnumMap<CustomerTier, Long> emptyTierCounts() {
+        EnumMap<CustomerTier, Long> counts = new EnumMap<>(CustomerTier.class);
+        for (CustomerTier tier : CustomerTier.values()) {
+            counts.put(tier, 0L);
+        }
+        return counts;
+    }
+
+    public record CustomerStatistics(
+            long totalCustomers,
+            Map<CustomerTier, Long> tierCounts) {
+
+        public CustomerStatistics {
+            tierCounts = Map.copyOf(tierCounts);
+        }
+    }
+
+    public record SegmentationPreview(
+            CustomerStatistics current,
+            CustomerStatistics projected) {
+
+        public SegmentationPreview {
+            if (current.totalCustomers() != projected.totalCustomers()) {
+                throw new IllegalStateException(
+                        "Current and projected customer totals must match");
+            }
+        }
+    }
+
+    public record CustomerSeed(
+            String id,
+            String name,
+            BigDecimal totalSpent,
+            CustomerTier tier) {
+
+        Customer toCustomer() {
+            return Customer.builder()
+                    .id(id)
+                    .name(name)
+                    .totalSpent(totalSpent)
+                    .tier(tier)
+                    .build();
+        }
     }
 }

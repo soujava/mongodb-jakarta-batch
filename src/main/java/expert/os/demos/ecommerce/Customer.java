@@ -22,6 +22,9 @@ public class Customer {
     @Column
     private CustomerTier tier;
 
+    Customer() {
+    }
+
     Customer(String id, String name, BigDecimal totalSpent, CustomerTier tier) {
         this.id = id;
         this.name = name;

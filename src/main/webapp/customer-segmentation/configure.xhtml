@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:f="jakarta.faces.core"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="primefaces">
+
+<h:head>
+    <title>Configure Customer Segmentation</title>
+    <h:outputStylesheet library="css" name="application.css"/>
+</h:head>
+
+<h:body>
+    <main class="page-shell flow-page">
+        <div class="flow-header">
+            <span class="eyebrow">Step 1 of 3</span>
+            <h1>Configure segmentation thresholds</h1>
+            <p>Set the minimum customer spending required for each tier.</p>
+        </div>
+
+        <ol class="flow-steps" aria-label="Segmentation progress">
+            <li class="active">1. Configure</li>
+            <li>2. Preview</li>
+            <li>3. Review &amp; Start</li>
+        </ol>
+
+        <h:form id="configurationForm">
+            <p:messages id="messages" showDetail="true" closable="true"/>
+
+            <p:card styleClass="flow-card">
+                <p:dataTable value="#{customerSegmentationFlow.state.thresholds}"
+                             var="threshold"
+                             rowKey="#{threshold.tier}">
+                    <p:column headerText="Tier">
+                        <span class="tier-name">#{threshold.tier}</span>
+                    </p:column>
+
+                    <p:column headerText="Minimum spending">
+                        <p:inputNumber value="#{threshold.minimumValue}"
+                                       minValue="0"
+                                       decimalPlaces="2"
+                                       symbol="€ "
+                                       symbolPosition="p"
+                                       required="true"
+                                       requiredMessage="A minimum value is required for #{threshold.tier}"
+                                       styleClass="threshold-input"/>
+                    </p:column>
+                </p:dataTable>
+
+                <div class="flow-actions">
+                    <p:commandButton value="Cancel"
+                                     icon="pi pi-times"
+                                     action="home"
+                                     process="@this"
+                                     immediate="true"
+                                     ajax="false"
+                                     styleClass="ui-button-outlined"/>
+                    <p:commandButton value="Preview"
+                                     icon="pi pi-arrow-right"
+                                     action="#{customerSegmentationFlow.preview}"
+                                     ajax="false"/>
+                </div>
+            </p:card>
+        </h:form>
+    </main>
+</h:body>
+</html>

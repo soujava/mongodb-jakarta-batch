@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:f="jakarta.faces.core"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="primefaces">
+
+<h:head>
+    <title>Review Customer Segmentation</title>
+    <h:outputStylesheet library="css" name="application.css"/>
+</h:head>
+
+<h:body>
+    <main class="page-shell flow-page">
+        <div class="flow-header">
+            <span class="eyebrow">Step 3 of 3</span>
+            <h1>Review &amp; Start Batch</h1>
+            <p>Confirm the configuration before starting the batch job.</p>
+        </div>
+
+        <ol class="flow-steps" aria-label="Segmentation progress">
+            <li>1. Configure</li>
+            <li>2. Preview</li>
+            <li class="active">3. Review &amp; Start</li>
+        </ol>
+
+        <h:form id="reviewForm">
+            <p:messages id="messages" showDetail="true" closable="true"/>
+
+            <div class="review-grid">
+                <p:panel header="Threshold configuration" styleClass="flow-card">
+                    <p:dataTable value="#{customerSegmentationFlow.state.thresholds}"
+                                 var="threshold"
+                                 rowKey="#{threshold.tier}">
+                        <p:column headerText="Tier">
+                            <span class="tier-name">#{threshold.tier}</span>
+                        </p:column>
+
+                        <p:column headerText="Minimum spending">
+                            <h:outputText value="#{threshold.minimumValue}"
+                                          styleClass="review-value">
+                                <f:convertNumber type="currency"
+                                                 currencySymbol="€"
+                                                 minFractionDigits="2"
+                                                 maxFractionDigits="2"/>
+                            </h:outputText>
+                        </p:column>
+                    </p:dataTable>
+                </p:panel>
+
+                <p:panel header="Before / after summary" styleClass="flow-card">
+                    <p:dataTable value="#{customerSegmentationFlow.state.comparisons}"
+                                 var="comparison"
+                                 rowKey="#{comparison.tier}">
+                        <p:column headerText="Tier">
+                            <span class="tier-name">#{comparison.tier}</span>
+                        </p:column>
+
+                        <p:column headerText="Current">
+                            <strong>#{comparison.currentCount}</strong> /
+                            <h:outputText value="#{comparison.currentPercentage}">
+                                <f:convertNumber minFractionDigits="1"
+                                                 maxFractionDigits="1"/>
+                            </h:outputText>%
+                        </p:column>
+
+                        <p:column headerText="Projected">
+                            <strong>#{comparison.projectedCount}</strong> /
+                            <h:outputText value="#{comparison.projectedPercentage}">
+                                <f:convertNumber minFractionDigits="1"
+                                                 maxFractionDigits="1"/>
+                            </h:outputText>%
+                        </p:column>
+
+                        <p:column headerText="Change">
+                            <span class="change-value #{comparison.changeStyleClass}">
+                                #{comparison.formattedChange}
+                            </span>
+                        </p:column>
+                    </p:dataTable>
+                </p:panel>
+            </div>
+
+            <p:card styleClass="flow-card review-actions-card">
+                <div class="flow-actions">
+                    <p:commandButton value="Back"
+                                     icon="pi pi-arrow-left"
+                                     action="preview"
+                                     ajax="false"
+                                     styleClass="ui-button-outlined"/>
+                    <p:commandButton value="Start Segmentation"
+                                     icon="pi pi-play"
+                                     action="#{customerSegmentationFlow.execute}"
+                                     ajax="false"/>
+                </div>
+            </p:card>
+        </h:form>
+    </main>
+</h:body>
+</html>

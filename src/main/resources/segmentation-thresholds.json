@@ -1,0 +1,18 @@
+[
+  {
+    "minimumValue": 10,
+    "tier": "BRONZE"
+  },
+  {
+    "minimumValue": 1000,
+    "tier": "SILVER"
+  },
+  {
+    "minimumValue": 5000,
+    "tier": "GOLD"
+  },
+  {
+    "minimumValue": 10000,
+    "tier": "PLATINUM"
+  }
+]
