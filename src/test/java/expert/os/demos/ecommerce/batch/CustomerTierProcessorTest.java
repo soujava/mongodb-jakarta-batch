@@ -20,7 +20,7 @@ class CustomerTierProcessorTest {
 
     @BeforeEach
     void setUp() {
-        processor = new CustomerTierProcessor(new SegmentationThresholds(List.of(
+        processor = new CustomerTierProcessor(new CustomerSegmentationPolicy(List.of(
                 threshold("10", CustomerTier.BRONZE),
                 threshold("1000", CustomerTier.SILVER),
                 threshold("5000", CustomerTier.GOLD),
