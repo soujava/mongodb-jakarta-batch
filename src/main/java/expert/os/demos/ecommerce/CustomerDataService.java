@@ -4,7 +4,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
-import jakarta.nosql.Template;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +13,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 @ApplicationScoped
 public class CustomerDataService {
@@ -22,7 +22,7 @@ public class CustomerDataService {
     private static final String CUSTOMERS_JSON = "/customers.json";
 
     @Inject
-    private Template template;
+    private CustomerRepository customerRepository;
 
     List<Customer> loadCustomers() {
         try (InputStream stream =
@@ -48,13 +48,15 @@ public class CustomerDataService {
     }
 
     public void initializeIfEmpty() {
-        if (template.select(Customer.class).limit(1).singleResult().isPresent()) {
-            LOGGER.info("Customer data already exists; skipping import");
-            return;
+        try (Stream<Customer> customers = customerRepository.findAll()) {
+            if (customers.findAny().isPresent()) {
+                LOGGER.info("Customer data already exists; skipping import");
+                return;
+            }
         }
 
         List<Customer> customers = loadCustomers();
-        template.insert(customers);
+        customerRepository.saveAll(customers);
 
         LOGGER.info(() -> "Customer import completed: created=%d"
                 .formatted(customers.size()));
@@ -65,9 +67,9 @@ public class CustomerDataService {
     }
 
     public CustomerStatistics statistics() {
-        List<Customer> customers = template.select(Customer.class)
-                .result();
-        return summarize(customers);
+        try (Stream<Customer> customers = customerRepository.findAll()) {
+            return summarize(customers.toList());
+        }
     }
 
     static CustomerStatistics summarize(List<Customer> customers) {
