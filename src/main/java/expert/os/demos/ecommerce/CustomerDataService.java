@@ -74,7 +74,7 @@ public class CustomerDataService {
         }
     }
 
-    public CustomerStatistics previewSegmentation(SegmentationThresholds thresholds) {
+    public SegmentationPreview segmentationPreview(SegmentationThresholds thresholds) {
         Objects.requireNonNull(thresholds, "thresholds are required");
 
         try (Stream<Customer> customers = customerRepository.findAll()) {
@@ -108,23 +108,38 @@ public class CustomerDataService {
         return new CustomerStatistics(customers.size(), counts);
     }
 
-    static CustomerStatistics calculatePreview(
+    static SegmentationPreview calculatePreview(
             Iterable<Customer> customers,
             SegmentationThresholds thresholds) {
 
+        EnumMap<CustomerTier, Long> currentCounts = emptyTierCounts();
+        EnumMap<CustomerTier, Long> projectedCounts = emptyTierCounts();
+
+        long totalCustomers = 0;
+        for (Customer customer : customers) {
+            CustomerTier currentTier = customer.getTier();
+            if (currentTier != null) {
+                currentCounts.merge(currentTier, 1L, Long::sum);
+            }
+
+            CustomerTier projectedTier = thresholds.tierFor(customer.getTotalSpent());
+            projectedCounts.merge(projectedTier, 1L, Long::sum);
+            totalCustomers++;
+        }
+
+        CustomerStatistics current =
+                new CustomerStatistics(totalCustomers, currentCounts);
+        CustomerStatistics projected =
+                new CustomerStatistics(totalCustomers, projectedCounts);
+        return new SegmentationPreview(current, projected);
+    }
+
+    private static EnumMap<CustomerTier, Long> emptyTierCounts() {
         EnumMap<CustomerTier, Long> counts = new EnumMap<>(CustomerTier.class);
         for (CustomerTier tier : CustomerTier.values()) {
             counts.put(tier, 0L);
         }
-
-        long totalCustomers = 0;
-        for (Customer customer : customers) {
-            CustomerTier tier = thresholds.tierFor(customer.getTotalSpent());
-            counts.merge(tier, 1L, Long::sum);
-            totalCustomers++;
-        }
-
-        return new CustomerStatistics(totalCustomers, counts);
+        return counts;
     }
 
     public record CustomerStatistics(
@@ -133,6 +148,18 @@ public class CustomerDataService {
 
         public CustomerStatistics {
             tierCounts = Map.copyOf(tierCounts);
+        }
+    }
+
+    public record SegmentationPreview(
+            CustomerStatistics current,
+            CustomerStatistics projected) {
+
+        public SegmentationPreview {
+            if (current.totalCustomers() != projected.totalCustomers()) {
+                throw new IllegalStateException(
+                        "Current and projected customer totals must match");
+            }
         }
     }
 
