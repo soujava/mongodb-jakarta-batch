@@ -59,6 +59,10 @@ public record SegmentationThresholds(
         }
     }
 
+    public String toJson() {
+        return JsonbBuilder.create().toJson(thresholds);
+    }
+
     public CustomerTier tierFor(BigDecimal totalSpent) {
         Objects.requireNonNull(totalSpent, "totalSpent is required");
 
