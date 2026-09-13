@@ -1,5 +1,7 @@
 package expert.os.demos.ecommerce;
 
+import expert.os.demos.ecommerce.batch.SegmentationThreshold;
+import expert.os.demos.ecommerce.batch.SegmentationThresholds;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -42,12 +44,47 @@ class CustomerDataServiceTest {
         );
     }
 
+    @Test
+    @DisplayName("Given new thresholds, when previewing, then the shared classification rule is applied")
+    void shouldPreviewWithSharedClassificationRule() {
+        List<Customer> customers = List.of(
+                customer("CUST-001", "7500", CustomerTier.SILVER)
+        );
+        SegmentationThresholds thresholds = thresholds();
+
+        CustomerDataService.CustomerStatistics preview =
+                CustomerDataService.calculatePreview(customers, thresholds);
+
+        assertEquals(1, preview.tierCounts().get(CustomerTier.GOLD));
+    }
+
     private static Customer customer(String id, CustomerTier tier) {
+        return customer(id, "10", tier);
+    }
+
+    private static Customer customer(
+            String id,
+            String totalSpent,
+            CustomerTier tier) {
+
         return Customer.builder()
                 .id(id)
                 .name("Customer")
-                .totalSpent(BigDecimal.TEN)
+                .totalSpent(new BigDecimal(totalSpent))
                 .tier(tier)
                 .build();
+    }
+
+    private static SegmentationThresholds thresholds() {
+        return new SegmentationThresholds(List.of(
+                threshold("10", CustomerTier.BRONZE),
+                threshold("1000", CustomerTier.SILVER),
+                threshold("5000", CustomerTier.GOLD),
+                threshold("10000", CustomerTier.PLATINUM)
+        ));
+    }
+
+    private static SegmentationThreshold threshold(String value, CustomerTier tier) {
+        return new SegmentationThreshold(new BigDecimal(value), tier);
     }
 }
