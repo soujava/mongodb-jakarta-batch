@@ -144,6 +144,29 @@ body {
     margin-bottom: 1.5rem;
 }
 
+.flow-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .75rem;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.flow-steps li {
+    padding: .8rem 1rem;
+    border-radius: 10px;
+    background: #e2e8f0;
+    color: #64748b;
+    font-weight: 600;
+    text-align: center;
+}
+
+.flow-steps li.active {
+    background: #1d4ed8;
+    color: white;
+}
+
 .flow-card .ui-card-content {
     padding-top: .5rem;
 }
@@ -161,6 +184,23 @@ body {
     font-weight: 700;
 }
 
+.preview-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 1.25rem 1rem 0;
+    font-size: 1.1rem;
+}
+
+.review-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+.review-actions-card {
+    margin-top: 1.5rem;
+}
+
 .flow-actions {
     justify-content: flex-end;
     margin-top: 1.5rem;
@@ -172,6 +212,10 @@ body {
     }
 
     .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .review-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -189,6 +233,10 @@ body {
     }
 
     .metric-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .flow-steps {
         grid-template-columns: 1fr;
     }
 }
