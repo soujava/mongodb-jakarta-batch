@@ -1,7 +1,7 @@
 package expert.os.demos.ecommerce;
 
+import expert.os.demos.ecommerce.batch.CustomerSegmentationPolicy;
 import expert.os.demos.ecommerce.batch.SegmentationThreshold;
-import expert.os.demos.ecommerce.batch.SegmentationThresholds;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -51,10 +51,10 @@ class CustomerDataServiceTest {
                 customer("CUST-001", "7500", CustomerTier.SILVER),
                 customer("CUST-002", "15000", CustomerTier.PLATINUM)
         );
-        SegmentationThresholds thresholds = thresholds();
+        CustomerSegmentationPolicy policy = policy();
 
         CustomerDataService.SegmentationPreview preview =
-                CustomerDataService.calculatePreview(customers, thresholds);
+                CustomerDataService.calculatePreview(customers, policy);
 
         assertAll(
                 () -> assertEquals(1, preview.current().tierCounts().get(CustomerTier.SILVER)),
@@ -69,7 +69,7 @@ class CustomerDataServiceTest {
     void shouldNotModifyCustomersDuringPreview() {
         Customer customer = customer("CUST-001", "7500", CustomerTier.SILVER);
 
-        CustomerDataService.calculatePreview(List.of(customer), thresholds());
+        CustomerDataService.calculatePreview(List.of(customer), policy());
 
         assertEquals(CustomerTier.SILVER, customer.getTier());
     }
@@ -91,8 +91,8 @@ class CustomerDataServiceTest {
                 .build();
     }
 
-    private static SegmentationThresholds thresholds() {
-        return new SegmentationThresholds(List.of(
+    private static CustomerSegmentationPolicy policy() {
+        return new CustomerSegmentationPolicy(List.of(
                 threshold("10", CustomerTier.BRONZE),
                 threshold("1000", CustomerTier.SILVER),
                 threshold("5000", CustomerTier.GOLD),
