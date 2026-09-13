@@ -84,6 +84,15 @@ class SegmentationThresholdsTest {
 
             assertEquals(CustomerTier.GOLD, parsed.tierFor(new BigDecimal("7500")));
         }
+
+        @Test
+        @DisplayName("When thresholds are serialized for the job, then they can be restored")
+        void shouldRoundTripJobParameter() {
+            SegmentationThresholds restored =
+                    SegmentationThresholds.fromJson(thresholds.toJson());
+
+            assertEquals(thresholds, restored);
+        }
     }
 
     @Nested
