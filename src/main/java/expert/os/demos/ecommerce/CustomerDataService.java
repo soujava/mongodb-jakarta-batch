@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 @ApplicationScoped
@@ -22,18 +24,17 @@ public class CustomerDataService {
     @Inject
     private Template template;
 
-    private List<Customer> loadCustomers() throws Exception {
+    private List<Customer> loadCustomers() {
         try (InputStream stream =
-                     CustomerDataService.class.getResourceAsStream(CUSTOMERS_JSON);
-             Jsonb jsonb = JsonbBuilder.create()) {
+                     CustomerDataService.class.getResourceAsStream(CUSTOMERS_JSON)) {
 
             if (stream == null) {
                 throw new IllegalStateException(
                         "Resource not found: " + CUSTOMERS_JSON);
             }
 
-            Customer[] customers =
-                    jsonb.fromJson(stream, Customer[].class);
+            Jsonb jsonb = JsonbBuilder.create();
+            Customer[] customers = jsonb.fromJson(stream, Customer[].class);
 
             return Arrays.asList(customers);
 
@@ -43,7 +44,7 @@ public class CustomerDataService {
         }
     }
 
-    void saveCustomers() throws Exception {
+    public void initializeIfEmpty() {
         if (template.select(Customer.class).limit(1).singleResult().isPresent()) {
             LOGGER.info("Customer data already exists; skipping import");
             return;
@@ -54,5 +55,18 @@ public class CustomerDataService {
 
         LOGGER.info(() -> "Customer import completed: created=%d"
                 .formatted(customers.size()));
+    }
+
+    public Map<CustomerTier, Long> countByTier() {
+        EnumMap<CustomerTier, Long> counts = new EnumMap<>(CustomerTier.class);
+        for (CustomerTier tier : CustomerTier.values()) {
+            counts.put(tier, 0L);
+        }
+
+        template.select(Customer.class)
+                .<Customer>result()
+                .forEach(customer -> counts.merge(customer.getTier(), 1L, Long::sum));
+
+        return Map.copyOf(counts);
     }
 }
