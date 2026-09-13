@@ -1,4 +1,4 @@
-package expert.os.demos.travel.assistance.ai;
+package expert.os.demos.ecommerce.ai;
 
 import dev.langchain4j.cdi.spi.RegisterAIService;
 import dev.langchain4j.service.SystemMessage;
