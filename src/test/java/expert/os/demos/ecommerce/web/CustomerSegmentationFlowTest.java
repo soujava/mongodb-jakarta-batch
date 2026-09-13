@@ -3,9 +3,9 @@ package expert.os.demos.ecommerce.web;
 import expert.os.demos.ecommerce.Customer;
 import expert.os.demos.ecommerce.CustomerDataService;
 import expert.os.demos.ecommerce.CustomerTier;
+import expert.os.demos.ecommerce.batch.CustomerSegmentationPolicy;
 import expert.os.demos.ecommerce.batch.CustomerSegmentationService;
 import expert.os.demos.ecommerce.batch.SegmentationThreshold;
-import expert.os.demos.ecommerce.batch.SegmentationThresholds;
 import jakarta.faces.context.FacesContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +28,7 @@ class CustomerSegmentationFlowTest {
 
     @BeforeEach
     void setUp() {
-        segmentationService = new StubSegmentationService(thresholds());
+        segmentationService = new StubSegmentationService(policy());
         CustomerSegmentationFlowService flowService =
                 new CustomerSegmentationFlowService(
                         segmentationService,
@@ -108,7 +108,7 @@ class CustomerSegmentationFlowTest {
             String outcome = flow.execute();
 
             assertEquals("home", outcome);
-            assertNotNull(segmentationService.startedThresholds);
+            assertNotNull(segmentationService.startedPolicy);
         }
     }
 
@@ -135,8 +135,8 @@ class CustomerSegmentationFlowTest {
                 .build();
     }
 
-    private static SegmentationThresholds thresholds() {
-        return new SegmentationThresholds(List.of(
+    private static CustomerSegmentationPolicy policy() {
+        return new CustomerSegmentationPolicy(List.of(
                 threshold("10", CustomerTier.BRONZE),
                 threshold("1000", CustomerTier.SILVER),
                 threshold("5000", CustomerTier.GOLD),
@@ -150,21 +150,21 @@ class CustomerSegmentationFlowTest {
 
     private static class StubSegmentationService extends CustomerSegmentationService {
 
-        private final SegmentationThresholds current;
-        private SegmentationThresholds startedThresholds;
+        private final CustomerSegmentationPolicy current;
+        private CustomerSegmentationPolicy startedPolicy;
 
-        private StubSegmentationService(SegmentationThresholds current) {
+        private StubSegmentationService(CustomerSegmentationPolicy current) {
             this.current = current;
         }
 
         @Override
-        public SegmentationThresholds currentThresholds() {
+        public CustomerSegmentationPolicy currentPolicy() {
             return current;
         }
 
         @Override
-        public long start(SegmentationThresholds thresholds) {
-            startedThresholds = thresholds;
+        public long start(CustomerSegmentationPolicy policy) {
+            startedPolicy = policy;
             return 42L;
         }
     }
@@ -178,7 +178,7 @@ class CustomerSegmentationFlowTest {
         }
 
         @Override
-        public SegmentationPreview segmentationPreview(SegmentationThresholds thresholds) {
+        public SegmentationPreview segmentationPreview(CustomerSegmentationPolicy policy) {
             EnumMap<CustomerTier, Long> currentCounts = new EnumMap<>(CustomerTier.class);
             EnumMap<CustomerTier, Long> projectedCounts = new EnumMap<>(CustomerTier.class);
             for (CustomerTier tier : CustomerTier.values()) {
@@ -188,7 +188,7 @@ class CustomerSegmentationFlowTest {
 
             for (Customer customer : customers) {
                 currentCounts.merge(customer.getTier(), 1L, Long::sum);
-                CustomerTier projectedTier = thresholds.tierFor(customer.getTotalSpent());
+                CustomerTier projectedTier = policy.tierFor(customer.getTotalSpent());
                 projectedCounts.merge(projectedTier, 1L, Long::sum);
             }
 
