@@ -1,8 +1,8 @@
-package expert.os.demos.travel.assistance.web;
+package expert.os.demos.ecommerce.web;
 
 
-import expert.os.demos.travel.assistance.DataLoader;
-import expert.os.demos.travel.assistance.ai.TravelService;
+import expert.os.demos.ecommerce.DataLoader;
+import expert.os.demos.ecommerce.ai.TravelService;
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
