@@ -2,9 +2,9 @@ package expert.os.demos.ecommerce.web;
 
 import expert.os.demos.ecommerce.CustomerDataService;
 import expert.os.demos.ecommerce.CustomerTier;
+import expert.os.demos.ecommerce.batch.CustomerSegmentationPolicy;
 import expert.os.demos.ecommerce.batch.CustomerSegmentationService;
 import expert.os.demos.ecommerce.batch.SegmentationThreshold;
-import expert.os.demos.ecommerce.batch.SegmentationThresholds;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -33,16 +33,16 @@ public class CustomerSegmentationFlowService {
 
     public CustomerSegmentationFlowState initializeState() {
         CustomerSegmentationFlowState state = new CustomerSegmentationFlowState();
-        state.setThresholds(toInputs(segmentationService.currentThresholds()));
+        state.setThresholds(toInputs(segmentationService.currentPolicy()));
         return state;
     }
 
     public void preview(CustomerSegmentationFlowState state) {
-        SegmentationThresholds thresholds = validatedThresholds(state);
-        state.setThresholds(toInputs(thresholds));
+        CustomerSegmentationPolicy policy = validatedPolicy(state);
+        state.setThresholds(toInputs(policy));
 
         CustomerDataService.SegmentationPreview preview =
-                customerDataService.segmentationPreview(thresholds);
+                customerDataService.segmentationPreview(policy);
         List<TierComparison> comparisons = Arrays.stream(CustomerTier.values())
                 .map(tier -> new TierComparison(
                         tier,
@@ -59,20 +59,20 @@ public class CustomerSegmentationFlowService {
     }
 
     public long start(CustomerSegmentationFlowState state) {
-        return segmentationService.start(validatedThresholds(state));
+        return segmentationService.start(validatedPolicy(state));
     }
 
-    private SegmentationThresholds validatedThresholds(
+    private CustomerSegmentationPolicy validatedPolicy(
             CustomerSegmentationFlowState state) {
 
         List<SegmentationThreshold> thresholds = state.getThresholds().stream()
                 .map(ThresholdInput::toThreshold)
                 .toList();
-        return new SegmentationThresholds(thresholds);
+        return new CustomerSegmentationPolicy(thresholds);
     }
 
-    private List<ThresholdInput> toInputs(SegmentationThresholds thresholds) {
-        return thresholds.thresholds().stream()
+    private List<ThresholdInput> toInputs(CustomerSegmentationPolicy policy) {
+        return policy.thresholds().stream()
                 .map(ThresholdInput::new)
                 .toList();
     }
