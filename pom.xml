@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>expert.os.demos</groupId>
+    <artifactId>ecommerce-customer-segmentation</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <name>E-Commerce Customer Segmentation</name>
+    <description>
+        E-commerce application that reclassifies customers into
+        Bronze, Silver, Gold, and Platinum tiers based on configurable
+        spending thresholds using Jakarta EE and MongoDB.
+    </description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <maven.compiler.release>21</maven.compiler.release>
+
+        <jakartaee-api.version>11.0.0</jakartaee-api.version>
+        <jnosql.version>1.1.17</jnosql.version>
+        <primefaces.version>16.0.0</primefaces.version>
+
+        <compiler-plugin.version>3.15.0</compiler-plugin.version>
+        <war-plugin.version>3.5.1</war-plugin.version>
+
+        <glassfish-plugin.version>8.0</glassfish-plugin.version>
+        <glassfish.version>8.0.3</glassfish.version>
+    </properties>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>${jakartaee-api.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.jnosql.databases</groupId>
+            <artifactId>jnosql-mongodb</artifactId>
+            <version>${jnosql.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.primefaces</groupId>
+            <artifactId>primefaces</artifactId>
+            <version>${primefaces.version}</version>
+            <classifier>jakarta</classifier>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <finalName>ecommerce-customer-segmentation</finalName>
+
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${compiler-plugin.version}</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>${war-plugin.version}</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.glassfish.embedded</groupId>
+                <artifactId>embedded-glassfish-maven-plugin</artifactId>
+                <version>${glassfish-plugin.version}</version>
+
+                <configuration>
+                    <app>target/ecommerce-customer-segmentation.war</app>
+                    <glassfish.version>${glassfish.version}</glassfish.version>
+                    <contextRoot>/</contextRoot>
+                    <port>8080</port>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+</project>
