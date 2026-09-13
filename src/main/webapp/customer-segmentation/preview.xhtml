@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:f="jakarta.faces.core"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="primefaces">
+
+<h:head>
+    <title>Preview Customer Segmentation</title>
+    <h:outputStylesheet library="css" name="application.css"/>
+</h:head>
+
+<h:body>
+    <main class="page-shell flow-page">
+        <div class="flow-header">
+            <span class="eyebrow">Step 2 of 3</span>
+            <h1>Preview impact</h1>
+            <p>Review the expected tier distribution without modifying customer data.</p>
+        </div>
+
+        <ol class="flow-steps" aria-label="Segmentation progress">
+            <li>1. Configure</li>
+            <li class="active">2. Preview</li>
+            <li>3. Review &amp; Start</li>
+        </ol>
+
+        <h:form id="previewForm">
+            <p:card styleClass="flow-card">
+                <p:dataTable value="#{customerSegmentationFlow.state.preview}"
+                             var="tierPreview"
+                             rowKey="#{tierPreview.tier}">
+                    <p:column headerText="Tier">
+                        <span class="tier-name">#{tierPreview.tier}</span>
+                    </p:column>
+
+                    <p:column headerText="Expected customers">
+                        <h:outputText value="#{tierPreview.count} customers"/>
+                    </p:column>
+
+                    <p:column headerText="Distribution">
+                        <h:outputText value="#{tierPreview.percentage}">
+                            <f:convertNumber minFractionDigits="1"
+                                             maxFractionDigits="1"/>
+                        </h:outputText>%
+                    </p:column>
+                </p:dataTable>
+
+                <div class="preview-total">
+                    <span>Total</span>
+                    <strong>#{customerSegmentationFlow.state.previewTotal} customers</strong>
+                </div>
+
+                <div class="flow-actions">
+                    <p:commandButton value="Back"
+                                     icon="pi pi-arrow-left"
+                                     action="configure"
+                                     ajax="false"
+                                     styleClass="ui-button-outlined"/>
+                    <p:commandButton value="Continue"
+                                     icon="pi pi-arrow-right"
+                                     action="#{customerSegmentationFlow.review}"
+                                     ajax="false"/>
+                </div>
+            </p:card>
+        </h:form>
+    </main>
+</h:body>
+</html>
