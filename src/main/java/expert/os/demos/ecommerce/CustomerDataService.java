@@ -9,7 +9,7 @@ import jakarta.nosql.Template;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.util.Arrays;
+import java.math.BigDecimal;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +24,7 @@ public class CustomerDataService {
     @Inject
     private Template template;
 
-    private List<Customer> loadCustomers() {
+    List<Customer> loadCustomers() {
         try (InputStream stream =
                      CustomerDataService.class.getResourceAsStream(CUSTOMERS_JSON)) {
 
@@ -34,9 +34,12 @@ public class CustomerDataService {
             }
 
             Jsonb jsonb = JsonbBuilder.create();
-            Customer[] customers = jsonb.fromJson(stream, Customer[].class);
+            CustomerSeed[] customers =
+                    jsonb.fromJson(stream, CustomerSeed[].class);
 
-            return Arrays.asList(customers);
+            return List.of(customers).stream()
+                    .map(CustomerSeed::toCustomer)
+                    .toList();
 
         } catch (IOException exception) {
             throw new UncheckedIOException(
@@ -58,15 +61,63 @@ public class CustomerDataService {
     }
 
     public Map<CustomerTier, Long> countByTier() {
+        return statistics().tierCounts();
+    }
+
+    public CustomerStatistics statistics() {
+        List<Customer> customers = template.select(Customer.class)
+                .result();
+        return summarize(customers);
+    }
+
+    static CustomerStatistics summarize(List<Customer> customers) {
         EnumMap<CustomerTier, Long> counts = new EnumMap<>(CustomerTier.class);
         for (CustomerTier tier : CustomerTier.values()) {
             counts.put(tier, 0L);
         }
 
-        template.select(Customer.class)
-                .<Customer>result()
-                .forEach(customer -> counts.merge(customer.getTier(), 1L, Long::sum));
+        long unclassifiedCustomers = 0;
+        for (Customer customer : customers) {
+            CustomerTier tier = customer.getTier();
+            if (tier == null) {
+                unclassifiedCustomers++;
+                continue;
+            }
 
-        return Map.copyOf(counts);
+            counts.merge(tier, 1L, Long::sum);
+        }
+
+        if (unclassifiedCustomers > 0) {
+            long count = unclassifiedCustomers;
+            LOGGER.warning(() -> "Found %d customers without a tier"
+                    .formatted(count));
+        }
+
+        return new CustomerStatistics(customers.size(), counts);
+    }
+
+    public record CustomerStatistics(
+            long totalCustomers,
+            Map<CustomerTier, Long> tierCounts) {
+
+        public CustomerStatistics {
+            tierCounts = Map.copyOf(tierCounts);
+        }
+    }
+
+    public record CustomerSeed(
+            String id,
+            String name,
+            BigDecimal totalSpent,
+            CustomerTier tier) {
+
+        Customer toCustomer() {
+            return Customer.builder()
+                    .id(id)
+                    .name(name)
+                    .totalSpent(totalSpent)
+                    .tier(tier)
+                    .build();
+        }
     }
 }
