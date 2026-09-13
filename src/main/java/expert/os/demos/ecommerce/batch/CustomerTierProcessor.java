@@ -16,21 +16,21 @@ import java.util.Objects;
 public class CustomerTierProcessor implements ItemProcessor {
 
     @Inject
-    @BatchProperty(name = SegmentationThresholds.JOB_PARAMETER)
+    @BatchProperty(name = CustomerSegmentationPolicy.JOB_PARAMETER)
     private String thresholdsJson;
 
-    private SegmentationThresholds thresholds;
+    private CustomerSegmentationPolicy policy;
 
     public CustomerTierProcessor() {
     }
 
-    CustomerTierProcessor(SegmentationThresholds thresholds) {
-        this.thresholds = Objects.requireNonNull(thresholds);
+    CustomerTierProcessor(CustomerSegmentationPolicy policy) {
+        this.policy = Objects.requireNonNull(policy);
     }
 
     @PostConstruct
     void initialize() {
-        thresholds = SegmentationThresholds.fromJson(thresholdsJson);
+        policy = CustomerSegmentationPolicy.fromJson(thresholdsJson);
     }
 
     @Override
@@ -39,7 +39,7 @@ public class CustomerTierProcessor implements ItemProcessor {
             throw new IllegalArgumentException("Expected a Customer item");
         }
 
-        CustomerTier calculatedTier = thresholds.tierFor(customer.getTotalSpent());
+        CustomerTier calculatedTier = policy.tierFor(customer.getTotalSpent());
         if (calculatedTier == customer.getTier()) {
             return null;
         }
