@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="primefaces">
+
+<h:head>
+    <title>Travel Planner AI</title>
+    <h:outputStylesheet library="css" name="travel.css"/>
+</h:head>
+
+<h:body>
+
+    <div class="hero">
+        <div class="hero-title">
+            ✈️ Travel Planner AI
+        </div>
+
+        <div class="hero-subtitle">
+            Explore cities, attractions, and build personalized travel itineraries
+            using AI, MongoDB, Jakarta Data, and the Planning Pattern.
+        </div>
+    </div>
+
+    <div class="main-container">
+
+        <h:form>
+
+            <p:card styleClass="chat-card">
+
+                <f:facet name="title">
+                    AI Travel Assistant
+                </f:facet>
+
+                <f:facet name="subtitle">
+                    Ask anything about destinations, attractions, or travel plans
+                </f:facet>
+
+                <p:inputTextarea
+                        id="prompt"
+                        value="#{travelBean.userMessage}"
+                        rows="6"
+                        autoResize="false"
+                        styleClass="prompt-box"
+                        placeholder="Example: Create a two-day historical itinerary in Portugal"/>
+
+                <p:spacer height="15"/>
+
+                <p:commandButton
+                        value="Generate Itinerary"
+                        icon="pi pi-send"
+                        action="#{travelBean.send}"
+                        update="answer"
+                        styleClass="ui-button-success"/>
+
+            </p:card>
+
+            <div class="examples">
+
+                <p:panel header="Suggested Prompts">
+
+                    <div class="grid">
+
+                        <div class="col-12 md:col-3">
+                            <p:card styleClass="example-card">
+
+                                <p:commandButton
+                                        value="🌍 Available Cities"
+                                        action="#{travelBean.availableCities}"
+                                        update="prompt"
+                                        process="@this"
+                                        styleClass="ui-button-flat example-button"/>
+
+                            </p:card>
+                        </div>
+
+                        <div class="col-12 md:col-3">
+                            <p:card styleClass="example-card">
+
+                                <p:commandButton
+                                        value="🏛️ Historical Tour"
+                                        action="#{travelBean.historicalTour}"
+                                        update="prompt"
+                                        process="@this"
+                                        styleClass="ui-button-flat example-button"/>
+
+                            </p:card>
+                        </div>
+
+                        <div class="col-12 md:col-3">
+                            <p:card styleClass="example-card">
+
+                                <p:commandButton
+                                        value="🎨 Museum Weekend"
+                                        action="#{travelBean.museumWeekend}"
+                                        update="prompt"
+                                        process="@this"
+                                        styleClass="ui-button-flat example-button"/>
+
+                            </p:card>
+                        </div>
+
+                        <div class="col-12 md:col-3">
+                            <p:card styleClass="example-card">
+
+                                <p:commandButton
+                                        value="🍷 Food &amp; Culture"
+                                        action="#{travelBean.foodAndCulture}"
+                                        update="prompt"
+                                        process="@this"
+                                        styleClass="ui-button-flat example-button"/>
+
+                            </p:card>
+                        </div>
+
+                    </div>
+
+                </p:panel>
+
+            </div>
+
+            <h:panelGroup
+                    id="answer"
+                    layout="block"
+                    styleClass="answer-container">
+
+                <div class="answer-header">
+                    <i class="pi pi-sparkles"></i>
+                    <span>AI Travel Recommendation</span>
+                </div>
+
+                <div class="answer-content">
+
+                    <h:panelGroup rendered="#{empty travelBean.answer}">
+                        <div class="empty-answer">
+                            Ask a question or select one of the suggested prompts to generate an itinerary.
+                        </div>
+                    </h:panelGroup>
+
+                    <h:panelGroup rendered="#{not empty travelBean.answer}">
+                        <h:outputText
+                                value="#{travelBean.answer}"
+                                escape="false"/>
+                    </h:panelGroup>
+
+                </div>
+
+            </h:panelGroup>
+
+        </h:form>
+
+        <div class="footer">
+            Powered by Jakarta EE, PrimeFaces, MongoDB, Jakarta NoSQL, Jakarta Data and AI Planning
+        </div>
+
+    </div>
+
+</h:body>
+</html>
