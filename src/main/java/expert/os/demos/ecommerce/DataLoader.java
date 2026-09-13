@@ -1,4 +1,4 @@
-package expert.os.demos.travel.assistance;
+package expert.os.demos.ecommerce;
 
 
 import jakarta.annotation.PostConstruct;
