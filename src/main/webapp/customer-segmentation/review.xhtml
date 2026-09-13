@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:f="jakarta.faces.core"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="primefaces">
+
+<h:head>
+    <title>Review Customer Segmentation</title>
+    <h:outputStylesheet library="css" name="application.css"/>
+</h:head>
+
+<h:body>
+    <main class="page-shell flow-page">
+        <div class="flow-header">
+            <span class="eyebrow">Step 2 of 2</span>
+            <h1>Review segmentation thresholds</h1>
+            <p>Confirm the configuration before starting the batch job.</p>
+        </div>
+
+        <h:form id="reviewForm">
+            <p:messages id="messages" showDetail="true" closable="true"/>
+
+            <p:card styleClass="flow-card">
+                <p:dataTable value="#{customerSegmentationFlow.thresholds}"
+                             var="threshold"
+                             rowKey="#{threshold.tier}">
+                    <p:column headerText="Tier">
+                        <span class="tier-name">#{threshold.tier}</span>
+                    </p:column>
+
+                    <p:column headerText="Minimum spending">
+                        <h:outputText value="#{threshold.minimumValue}"
+                                      styleClass="review-value">
+                            <f:convertNumber type="currency"
+                                             currencySymbol="€"
+                                             minFractionDigits="2"
+                                             maxFractionDigits="2"/>
+                        </h:outputText>
+                    </p:column>
+                </p:dataTable>
+
+                <div class="flow-actions">
+                    <p:commandButton value="Back"
+                                     icon="pi pi-arrow-left"
+                                     action="configure"
+                                     ajax="false"
+                                     styleClass="ui-button-outlined"/>
+                    <p:commandButton value="Start Batch"
+                                     icon="pi pi-play"
+                                     action="#{customerSegmentationFlow.execute}"
+                                     ajax="false"/>
+                </div>
+            </p:card>
+        </h:form>
+    </main>
+</h:body>
+</html>
