@@ -1,11 +1,11 @@
 package expert.os.demos.ecommerce.batch;
 
 import expert.os.demos.ecommerce.Customer;
+import expert.os.demos.ecommerce.CustomerRepository;
 import jakarta.batch.api.chunk.AbstractItemWriter;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.nosql.Template;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -17,7 +17,7 @@ public class CustomerItemWriter extends AbstractItemWriter {
     private static final Logger LOGGER = Logger.getLogger(CustomerItemWriter.class.getName());
 
     @Inject
-    private Template template;
+    private CustomerRepository customerRepository;
 
     @Override
     public void writeItems(List<Object> items) {
@@ -25,7 +25,7 @@ public class CustomerItemWriter extends AbstractItemWriter {
                 .map(this::toCustomer)
                 .toList();
 
-        template.update(customers);
+        customerRepository.saveAll(customers);
         LOGGER.info(() -> "Updated %d customer tiers".formatted(customers.size()));
     }
 
