@@ -22,7 +22,7 @@ public class Customer {
     @Column
     private CustomerTier tier;
 
-    Customer() {
+    public Customer() {
     }
 
     Customer(String id, String name, BigDecimal totalSpent, CustomerTier tier) {
