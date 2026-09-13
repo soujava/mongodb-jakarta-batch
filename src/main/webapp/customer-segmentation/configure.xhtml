@@ -12,16 +12,22 @@
 <h:body>
     <main class="page-shell flow-page">
         <div class="flow-header">
-            <span class="eyebrow">Step 1 of 2</span>
+            <span class="eyebrow">Step 1 of 3</span>
             <h1>Configure segmentation thresholds</h1>
             <p>Set the minimum customer spending required for each tier.</p>
         </div>
+
+        <ol class="flow-steps" aria-label="Segmentation progress">
+            <li class="active">1. Configure</li>
+            <li>2. Preview</li>
+            <li>3. Review &amp; Start</li>
+        </ol>
 
         <h:form id="configurationForm">
             <p:messages id="messages" showDetail="true" closable="true"/>
 
             <p:card styleClass="flow-card">
-                <p:dataTable value="#{customerSegmentationFlow.thresholds}"
+                <p:dataTable value="#{customerSegmentationFlow.state.thresholds}"
                              var="threshold"
                              rowKey="#{threshold.tier}">
                     <p:column headerText="Tier">
@@ -48,9 +54,9 @@
                                      immediate="true"
                                      ajax="false"
                                      styleClass="ui-button-outlined"/>
-                    <p:commandButton value="Review"
+                    <p:commandButton value="Preview"
                                      icon="pi pi-arrow-right"
-                                     action="#{customerSegmentationFlow.review}"
+                                     action="#{customerSegmentationFlow.preview}"
                                      ajax="false"/>
                 </div>
             </p:card>
