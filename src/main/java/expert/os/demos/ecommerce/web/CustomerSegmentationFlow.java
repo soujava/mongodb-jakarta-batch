@@ -61,18 +61,23 @@ public class CustomerSegmentationFlow implements Serializable {
                     .toList();
             state.setThresholds(thresholds);
 
-            CustomerDataService.CustomerStatistics statistics =
-                    customerDataService.previewSegmentation(validated);
-            List<TierPreview> preview = Arrays.stream(CustomerTier.values())
-                    .map(tier -> new TierPreview(
+            CustomerDataService.SegmentationPreview preview =
+                    customerDataService.segmentationPreview(validated);
+            List<TierComparison> comparisons = Arrays.stream(CustomerTier.values())
+                    .map(tier -> new TierComparison(
                             tier,
-                            statistics.tierCounts().getOrDefault(tier, 0L),
-                            percentage(statistics, tier)))
+                            preview.current().tierCounts().getOrDefault(tier, 0L),
+                            percentage(preview.current(), tier),
+                            preview.projected().tierCounts().getOrDefault(tier, 0L),
+                            percentage(preview.projected(), tier)))
                     .toList();
-            state.setPreview(preview, statistics.totalCustomers());
+            state.setComparison(
+                    comparisons,
+                    preview.current().totalCustomers(),
+                    preview.projected().totalCustomers());
 
             return "preview";
-        } catch (IllegalArgumentException exception) {
+        } catch (IllegalArgumentException | IllegalStateException exception) {
             addMessage(
                     FacesMessage.SEVERITY_ERROR,
                     "Invalid thresholds",
