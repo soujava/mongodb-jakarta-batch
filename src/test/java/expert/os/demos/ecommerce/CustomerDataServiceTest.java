@@ -45,17 +45,33 @@ class CustomerDataServiceTest {
     }
 
     @Test
-    @DisplayName("Given new thresholds, when previewing, then the shared classification rule is applied")
-    void shouldPreviewWithSharedClassificationRule() {
+    @DisplayName("Given new thresholds, when previewing, then current and projected distributions are calculated")
+    void shouldCalculateCurrentAndProjectedDistributions() {
         List<Customer> customers = List.of(
-                customer("CUST-001", "7500", CustomerTier.SILVER)
+                customer("CUST-001", "7500", CustomerTier.SILVER),
+                customer("CUST-002", "15000", CustomerTier.PLATINUM)
         );
         SegmentationThresholds thresholds = thresholds();
 
-        CustomerDataService.CustomerStatistics preview =
+        CustomerDataService.SegmentationPreview preview =
                 CustomerDataService.calculatePreview(customers, thresholds);
 
-        assertEquals(1, preview.tierCounts().get(CustomerTier.GOLD));
+        assertAll(
+                () -> assertEquals(1, preview.current().tierCounts().get(CustomerTier.SILVER)),
+                () -> assertEquals(1, preview.projected().tierCounts().get(CustomerTier.GOLD)),
+                () -> assertEquals(2, preview.current().totalCustomers()),
+                () -> assertEquals(2, preview.projected().totalCustomers())
+        );
+    }
+
+    @Test
+    @DisplayName("Given preview calculation, when tiers are projected, then persisted customers are not modified")
+    void shouldNotModifyCustomersDuringPreview() {
+        Customer customer = customer("CUST-001", "7500", CustomerTier.SILVER);
+
+        CustomerDataService.calculatePreview(List.of(customer), thresholds());
+
+        assertEquals(CustomerTier.SILVER, customer.getTier());
     }
 
     private static Customer customer(String id, CustomerTier tier) {
