@@ -52,7 +52,7 @@ class CustomerSegmentationFlowTest {
             String outcome = flow.preview();
 
             assertEquals("preview", outcome);
-            assertEquals(2, preview(CustomerTier.SILVER).getCount());
+            assertEquals(2, comparison(CustomerTier.SILVER).getProjectedCount());
         }
 
         @Test
@@ -60,22 +60,23 @@ class CustomerSegmentationFlowTest {
         void shouldRetainCompletePreview() {
             flow.preview();
 
-            assertEquals(4, flow.getState().getPreview().size());
-            assertEquals(4, flow.getState().getPreviewTotal());
-            assertNotNull(preview(CustomerTier.PLATINUM));
+            assertEquals(4, flow.getState().getComparisons().size());
+            assertEquals(4, flow.getState().getCurrentTotal());
+            assertEquals(4, flow.getState().getProjectedTotal());
+            assertNotNull(comparison(CustomerTier.PLATINUM));
         }
 
         @Test
         @DisplayName("When thresholds change, then a repeated preview recalculates the result")
         void shouldRecalculatePreview() {
             flow.preview();
-            long initialGold = preview(CustomerTier.GOLD).getCount();
+            long initialGold = comparison(CustomerTier.GOLD).getProjectedCount();
 
             thresholdInput(CustomerTier.GOLD).setMinimumValue(new BigDecimal("8000"));
             flow.preview();
 
             assertEquals(1, initialGold);
-            assertEquals(0, preview(CustomerTier.GOLD).getCount());
+            assertEquals(0, comparison(CustomerTier.GOLD).getProjectedCount());
         }
 
         @Test
@@ -88,7 +89,7 @@ class CustomerSegmentationFlowTest {
 
             assertEquals("review", outcome);
             assertEquals(new BigDecimal("8000"), thresholdInput(CustomerTier.GOLD).getMinimumValue());
-            assertFalse(flow.getState().getPreview().isEmpty());
+            assertFalse(flow.getState().getComparisons().isEmpty());
         }
     }
 
@@ -115,8 +116,8 @@ class CustomerSegmentationFlowTest {
                 .orElseThrow();
     }
 
-    private TierPreview preview(CustomerTier tier) {
-        return flow.getState().getPreview().stream()
+    private TierComparison comparison(CustomerTier tier) {
+        return flow.getState().getComparisons().stream()
                 .filter(item -> item.getTier() == tier)
                 .findFirst()
                 .orElseThrow();
@@ -174,18 +175,23 @@ class CustomerSegmentationFlowTest {
         }
 
         @Override
-        public CustomerStatistics previewSegmentation(SegmentationThresholds thresholds) {
-            EnumMap<CustomerTier, Long> counts = new EnumMap<>(CustomerTier.class);
+        public SegmentationPreview segmentationPreview(SegmentationThresholds thresholds) {
+            EnumMap<CustomerTier, Long> currentCounts = new EnumMap<>(CustomerTier.class);
+            EnumMap<CustomerTier, Long> projectedCounts = new EnumMap<>(CustomerTier.class);
             for (CustomerTier tier : CustomerTier.values()) {
-                counts.put(tier, 0L);
+                currentCounts.put(tier, 0L);
+                projectedCounts.put(tier, 0L);
             }
 
             for (Customer customer : customers) {
-                CustomerTier tier = thresholds.tierFor(customer.getTotalSpent());
-                counts.merge(tier, 1L, Long::sum);
+                currentCounts.merge(customer.getTier(), 1L, Long::sum);
+                CustomerTier projectedTier = thresholds.tierFor(customer.getTotalSpent());
+                projectedCounts.merge(projectedTier, 1L, Long::sum);
             }
 
-            return new CustomerStatistics(customers.size(), counts);
+            return new SegmentationPreview(
+                    new CustomerStatistics(customers.size(), currentCounts),
+                    new CustomerStatistics(customers.size(), projectedCounts));
         }
     }
 
