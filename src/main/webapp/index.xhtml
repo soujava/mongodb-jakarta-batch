@@ -38,22 +38,22 @@
                                      icon="pi pi-sliders-h"
                                      action="customer-segmentation"
                                      ajax="false"
-                                     disabled="#{dashboardBean.segmentationRunning}"/>
+                                     disabled="#{dashboardBean.state.segmentationRunning}"/>
                 </div>
             </div>
 
             <div class="metric-grid">
                 <div class="metric-card total">
                     <span class="metric-label">Total customers</span>
-                    <strong>#{dashboardBean.totalCustomers}</strong>
+                    <strong>#{dashboardBean.state.totalCustomers}</strong>
                     <span class="metric-detail">All customer tiers</span>
                 </div>
 
                 <div class="metric-card bronze">
                     <span class="metric-label">Bronze</span>
-                    <strong>#{dashboardBean.bronzeCount}</strong>
+                    <strong>#{dashboardBean.state.bronzeCount}</strong>
                     <span class="metric-detail">
-                        <h:outputText value="#{dashboardBean.bronzePercentage}">
+                        <h:outputText value="#{dashboardBean.state.bronzePercentage}">
                             <f:convertNumber minFractionDigits="1"
                                              maxFractionDigits="1"/>
                         </h:outputText>%
@@ -62,9 +62,9 @@
 
                 <div class="metric-card silver">
                     <span class="metric-label">Silver</span>
-                    <strong>#{dashboardBean.silverCount}</strong>
+                    <strong>#{dashboardBean.state.silverCount}</strong>
                     <span class="metric-detail">
-                        <h:outputText value="#{dashboardBean.silverPercentage}">
+                        <h:outputText value="#{dashboardBean.state.silverPercentage}">
                             <f:convertNumber minFractionDigits="1"
                                              maxFractionDigits="1"/>
                         </h:outputText>%
@@ -73,9 +73,9 @@
 
                 <div class="metric-card gold">
                     <span class="metric-label">Gold</span>
-                    <strong>#{dashboardBean.goldCount}</strong>
+                    <strong>#{dashboardBean.state.goldCount}</strong>
                     <span class="metric-detail">
-                        <h:outputText value="#{dashboardBean.goldPercentage}">
+                        <h:outputText value="#{dashboardBean.state.goldPercentage}">
                             <f:convertNumber minFractionDigits="1"
                                              maxFractionDigits="1"/>
                         </h:outputText>%
@@ -84,9 +84,9 @@
 
                 <div class="metric-card platinum">
                     <span class="metric-label">Platinum</span>
-                    <strong>#{dashboardBean.platinumCount}</strong>
+                    <strong>#{dashboardBean.state.platinumCount}</strong>
                     <span class="metric-detail">
-                        <h:outputText value="#{dashboardBean.platinumPercentage}">
+                        <h:outputText value="#{dashboardBean.state.platinumPercentage}">
                             <f:convertNumber minFractionDigits="1"
                                              maxFractionDigits="1"/>
                         </h:outputText>%
@@ -99,7 +99,7 @@
                     <f:facet name="title">
                         Tier distribution
                     </f:facet>
-                    <p:chart value="#{dashboardBean.tierDistributionChart}"
+                    <p:chart value="#{dashboardBean.state.tierDistributionChart}"
                              ariaLabel="Customer tier distribution"
                              canvasStyle="height: 320px"/>
                 </p:card>
@@ -111,11 +111,11 @@
 
                     <div class="status-row">
                         <span>Status</span>
-                        <strong>#{dashboardBean.latestBatchStatus}</strong>
+                        <strong>#{dashboardBean.state.latestBatchStatus}</strong>
                     </div>
                     <div class="status-row">
                         <span>Currently running</span>
-                        <strong>#{dashboardBean.segmentationRunning ? 'Yes' : 'No'}</strong>
+                        <strong>#{dashboardBean.state.segmentationRunning ? 'Yes' : 'No'}</strong>
                     </div>
                     <p class="status-help">
                         Refresh the dashboard to load the latest batch status and customer totals.
