@@ -1,5 +1,6 @@
 package expert.os.demos.ecommerce;
 
+import expert.os.demos.ecommerce.batch.SegmentationThresholds;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.json.bind.Jsonb;
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
@@ -72,6 +74,14 @@ public class CustomerDataService {
         }
     }
 
+    public CustomerStatistics previewSegmentation(SegmentationThresholds thresholds) {
+        Objects.requireNonNull(thresholds, "thresholds are required");
+
+        try (Stream<Customer> customers = customerRepository.findAll()) {
+            return calculatePreview(customers::iterator, thresholds);
+        }
+    }
+
     static CustomerStatistics summarize(List<Customer> customers) {
         EnumMap<CustomerTier, Long> counts = new EnumMap<>(CustomerTier.class);
         for (CustomerTier tier : CustomerTier.values()) {
@@ -96,6 +106,25 @@ public class CustomerDataService {
         }
 
         return new CustomerStatistics(customers.size(), counts);
+    }
+
+    static CustomerStatistics calculatePreview(
+            Iterable<Customer> customers,
+            SegmentationThresholds thresholds) {
+
+        EnumMap<CustomerTier, Long> counts = new EnumMap<>(CustomerTier.class);
+        for (CustomerTier tier : CustomerTier.values()) {
+            counts.put(tier, 0L);
+        }
+
+        long totalCustomers = 0;
+        for (Customer customer : customers) {
+            CustomerTier tier = thresholds.tierFor(customer.getTotalSpent());
+            counts.merge(tier, 1L, Long::sum);
+            totalCustomers++;
+        }
+
+        return new CustomerStatistics(totalCustomers, counts);
     }
 
     public record CustomerStatistics(
