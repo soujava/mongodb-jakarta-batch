@@ -1,4 +1,4 @@
-package expert.os.demos.travel.assistance.web;
+package expert.os.demos.ecommerce.web;
 
 import javax.net.ssl.*;
 import java.security.SecureRandom;
