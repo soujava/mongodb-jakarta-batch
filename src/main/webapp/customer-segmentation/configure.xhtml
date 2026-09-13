@@ -41,10 +41,13 @@
                 </p:dataTable>
 
                 <div class="flow-actions">
-                    <p:button value="Cancel"
-                              icon="pi pi-times"
-                              outcome="home"
-                              styleClass="ui-button-outlined"/>
+                    <p:commandButton value="Cancel"
+                                     icon="pi pi-times"
+                                     action="home"
+                                     process="@this"
+                                     immediate="true"
+                                     ajax="false"
+                                     styleClass="ui-button-outlined"/>
                     <p:commandButton value="Review"
                                      icon="pi pi-arrow-right"
                                      action="#{customerSegmentationFlow.review}"
