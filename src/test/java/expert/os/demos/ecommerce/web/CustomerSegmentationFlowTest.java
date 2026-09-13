@@ -1,0 +1,205 @@
+package expert.os.demos.ecommerce.web;
+
+import expert.os.demos.ecommerce.Customer;
+import expert.os.demos.ecommerce.CustomerDataService;
+import expert.os.demos.ecommerce.CustomerTier;
+import expert.os.demos.ecommerce.batch.CustomerSegmentationService;
+import expert.os.demos.ecommerce.batch.SegmentationThreshold;
+import expert.os.demos.ecommerce.batch.SegmentationThresholds;
+import jakarta.faces.context.FacesContext;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+import java.util.EnumMap;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@DisplayName("Customer segmentation flow")
+class CustomerSegmentationFlowTest {
+
+    private StubSegmentationService segmentationService;
+    private CustomerSegmentationFlow flow;
+
+    @BeforeEach
+    void setUp() {
+        segmentationService = new StubSegmentationService(thresholds());
+        flow = new TestCustomerSegmentationFlow(
+                segmentationService,
+                new StubCustomerDataService(List.of(
+                        customer("CUST-001", "500"),
+                        customer("CUST-002", "2500"),
+                        customer("CUST-003", "7500"),
+                        customer("CUST-004", "15000")
+                )));
+        flow.initialize();
+    }
+
+    @Nested
+    @DisplayName("Given edited thresholds")
+    class Preview {
+
+        @Test
+        @DisplayName("When preview is requested, then current edited values are used")
+        void shouldUseEditedThresholds() {
+            thresholdInput(CustomerTier.GOLD).setMinimumValue(new BigDecimal("8000"));
+
+            String outcome = flow.preview();
+
+            assertEquals("preview", outcome);
+            assertEquals(2, preview(CustomerTier.SILVER).getCount());
+        }
+
+        @Test
+        @DisplayName("When preview is calculated, then every tier and total are retained")
+        void shouldRetainCompletePreview() {
+            flow.preview();
+
+            assertEquals(4, flow.getState().getPreview().size());
+            assertEquals(4, flow.getState().getPreviewTotal());
+            assertNotNull(preview(CustomerTier.PLATINUM));
+        }
+
+        @Test
+        @DisplayName("When thresholds change, then a repeated preview recalculates the result")
+        void shouldRecalculatePreview() {
+            flow.preview();
+            long initialGold = preview(CustomerTier.GOLD).getCount();
+
+            thresholdInput(CustomerTier.GOLD).setMinimumValue(new BigDecimal("8000"));
+            flow.preview();
+
+            assertEquals(1, initialGold);
+            assertEquals(0, preview(CustomerTier.GOLD).getCount());
+        }
+
+        @Test
+        @DisplayName("When continuing to review, then flow-scoped configuration and preview remain available")
+        void shouldRetainStateForReview() {
+            thresholdInput(CustomerTier.GOLD).setMinimumValue(new BigDecimal("8000"));
+            flow.preview();
+
+            String outcome = flow.review();
+
+            assertEquals("review", outcome);
+            assertEquals(new BigDecimal("8000"), thresholdInput(CustomerTier.GOLD).getMinimumValue());
+            assertFalse(flow.getState().getPreview().isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("Given a reviewed preview")
+    class Execution {
+
+        @Test
+        @DisplayName("When execution starts, then the flow returns home")
+        void shouldReturnHome() {
+            flow.preview();
+
+            String outcome = flow.execute();
+
+            assertEquals("home", outcome);
+            assertNotNull(segmentationService.startedThresholds);
+        }
+    }
+
+    private ThresholdInput thresholdInput(CustomerTier tier) {
+        return flow.getState().getThresholds().stream()
+                .filter(threshold -> threshold.getTier() == tier)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private TierPreview preview(CustomerTier tier) {
+        return flow.getState().getPreview().stream()
+                .filter(item -> item.getTier() == tier)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static Customer customer(String id, String totalSpent) {
+        return Customer.builder()
+                .id(id)
+                .name("Customer")
+                .totalSpent(new BigDecimal(totalSpent))
+                .tier(CustomerTier.BRONZE)
+                .build();
+    }
+
+    private static SegmentationThresholds thresholds() {
+        return new SegmentationThresholds(List.of(
+                threshold("10", CustomerTier.BRONZE),
+                threshold("1000", CustomerTier.SILVER),
+                threshold("5000", CustomerTier.GOLD),
+                threshold("10000", CustomerTier.PLATINUM)
+        ));
+    }
+
+    private static SegmentationThreshold threshold(String value, CustomerTier tier) {
+        return new SegmentationThreshold(new BigDecimal(value), tier);
+    }
+
+    private static class StubSegmentationService extends CustomerSegmentationService {
+
+        private final SegmentationThresholds current;
+        private SegmentationThresholds startedThresholds;
+
+        private StubSegmentationService(SegmentationThresholds current) {
+            this.current = current;
+        }
+
+        @Override
+        public SegmentationThresholds currentThresholds() {
+            return current;
+        }
+
+        @Override
+        public long start(SegmentationThresholds thresholds) {
+            startedThresholds = thresholds;
+            return 42L;
+        }
+    }
+
+    private static class StubCustomerDataService extends CustomerDataService {
+
+        private final List<Customer> customers;
+
+        private StubCustomerDataService(List<Customer> customers) {
+            this.customers = customers;
+        }
+
+        @Override
+        public CustomerStatistics previewSegmentation(SegmentationThresholds thresholds) {
+            EnumMap<CustomerTier, Long> counts = new EnumMap<>(CustomerTier.class);
+            for (CustomerTier tier : CustomerTier.values()) {
+                counts.put(tier, 0L);
+            }
+
+            for (Customer customer : customers) {
+                CustomerTier tier = thresholds.tierFor(customer.getTotalSpent());
+                counts.merge(tier, 1L, Long::sum);
+            }
+
+            return new CustomerStatistics(customers.size(), counts);
+        }
+    }
+
+    private static class TestCustomerSegmentationFlow extends CustomerSegmentationFlow {
+
+        private TestCustomerSegmentationFlow(
+                CustomerSegmentationService segmentationService,
+                CustomerDataService customerDataService) {
+            super(segmentationService, customerDataService);
+        }
+
+        @Override
+        FacesContext currentFacesContext() {
+            return null;
+        }
+    }
+}
