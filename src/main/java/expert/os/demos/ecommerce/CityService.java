@@ -1,4 +1,4 @@
-package expert.os.demos.travel.assistance;
+package expert.os.demos.ecommerce;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
