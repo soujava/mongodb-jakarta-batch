@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<job id="customer-segmentation"
+     xmlns="https://jakarta.ee/xml/ns/jakartaee"
+     version="2.0">
+    <step id="recalculate-customer-tiers">
+        <chunk item-count="20">
+            <reader ref="customerItemReader"/>
+            <processor ref="customerTierProcessor">
+                <properties>
+                    <property name="thresholds" value="#{jobParameters['thresholds']}"/>
+                </properties>
+            </processor>
+            <writer ref="customerItemWriter"/>
+        </chunk>
+    </step>
+</job>
