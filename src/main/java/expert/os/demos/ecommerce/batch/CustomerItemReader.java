@@ -8,6 +8,7 @@ import jakarta.inject.Named;
 import jakarta.nosql.Template;
 
 import java.io.Serializable;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -25,7 +26,11 @@ public class CustomerItemReader extends AbstractItemReader {
 
     @Override
     public void open(Serializable checkpoint) {
-        customers = template.select(Customer.class).result();
+        customers = template.select(Customer.class)
+                .<Customer>result()
+                .stream()
+                .sorted(Comparator.comparing(Customer::getId))
+                .toList();
         nextIndex = checkpoint instanceof Integer index ? index : 0;
 
         if (nextIndex < 0 || nextIndex > customers.size()) {
