@@ -67,6 +67,23 @@ class SegmentationThresholdsTest {
 
             assertEquals(CustomerTier.GOLD, unordered.tierFor(new BigDecimal("7500")));
         }
+
+        @Test
+        @DisplayName("When thresholds are supplied as a job parameter, then JSON is deserialized")
+        void shouldDeserializeJobParameter() {
+            String json = """
+                    [
+                      {"minimumValue": 10, "tier": "BRONZE"},
+                      {"minimumValue": 1000, "tier": "SILVER"},
+                      {"minimumValue": 5000, "tier": "GOLD"},
+                      {"minimumValue": 10000, "tier": "PLATINUM"}
+                    ]
+                    """;
+
+            SegmentationThresholds parsed = SegmentationThresholds.fromJson(json);
+
+            assertEquals(CustomerTier.GOLD, parsed.tierFor(new BigDecimal("7500")));
+        }
     }
 
     @Nested
