@@ -29,14 +29,17 @@ class CustomerSegmentationFlowTest {
     @BeforeEach
     void setUp() {
         segmentationService = new StubSegmentationService(thresholds());
+        CustomerSegmentationFlowService flowService =
+                new CustomerSegmentationFlowService(
+                        segmentationService,
+                        new StubCustomerDataService(List.of(
+                                customer("CUST-001", "500"),
+                                customer("CUST-002", "2500"),
+                                customer("CUST-003", "7500"),
+                                customer("CUST-004", "15000")
+                        )));
         flow = new TestCustomerSegmentationFlow(
-                segmentationService,
-                new StubCustomerDataService(List.of(
-                        customer("CUST-001", "500"),
-                        customer("CUST-002", "2500"),
-                        customer("CUST-003", "7500"),
-                        customer("CUST-004", "15000")
-                )));
+                flowService);
         flow.initialize();
     }
 
@@ -198,9 +201,8 @@ class CustomerSegmentationFlowTest {
     private static class TestCustomerSegmentationFlow extends CustomerSegmentationFlow {
 
         private TestCustomerSegmentationFlow(
-                CustomerSegmentationService segmentationService,
-                CustomerDataService customerDataService) {
-            super(segmentationService, customerDataService);
+                CustomerSegmentationFlowService flowService) {
+            super(flowService);
         }
 
         @Override
