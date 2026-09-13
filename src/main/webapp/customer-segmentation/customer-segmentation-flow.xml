@@ -11,6 +11,10 @@
             <vdl-document>/customer-segmentation/configure.xhtml</vdl-document>
         </view>
 
+        <view id="preview">
+            <vdl-document>/customer-segmentation/preview.xhtml</vdl-document>
+        </view>
+
         <view id="review">
             <vdl-document>/customer-segmentation/review.xhtml</vdl-document>
         </view>
