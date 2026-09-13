@@ -38,10 +38,10 @@ public class DashboardBean implements Serializable {
     }
 
     public void refresh() {
-        tierCounts = new EnumMap<>(customerDataService.countByTier());
-        totalCustomers = tierCounts.values().stream()
-                .mapToLong(Long::longValue)
-                .sum();
+        CustomerDataService.CustomerStatistics statistics =
+                customerDataService.statistics();
+        tierCounts = new EnumMap<>(statistics.tierCounts());
+        totalCustomers = statistics.totalCustomers();
         latestBatchStatus = segmentationService.latestStatus()
                 .map(Enum::name)
                 .orElse("NOT_STARTED");
