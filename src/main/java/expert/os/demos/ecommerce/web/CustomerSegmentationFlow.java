@@ -1,5 +1,6 @@
 package expert.os.demos.ecommerce.web;
 
+import expert.os.demos.ecommerce.CustomerDataService;
 import expert.os.demos.ecommerce.CustomerTier;
 import expert.os.demos.ecommerce.batch.CustomerSegmentationService;
 import expert.os.demos.ecommerce.batch.SegmentationThreshold;
@@ -13,8 +14,9 @@ import jakarta.inject.Named;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @Named
 @FlowScoped("customer-segmentation")
@@ -26,30 +28,61 @@ public class CustomerSegmentationFlow implements Serializable {
     @Inject
     private CustomerSegmentationService segmentationService;
 
-    private List<ThresholdInput> thresholds;
+    @Inject
+    private CustomerDataService customerDataService;
+
+    private final CustomerSegmentationFlowState state =
+            new CustomerSegmentationFlowState();
+
+    public CustomerSegmentationFlow() {
+    }
+
+    CustomerSegmentationFlow(
+            CustomerSegmentationService segmentationService,
+            CustomerDataService customerDataService) {
+        this.segmentationService = Objects.requireNonNull(segmentationService);
+        this.customerDataService = Objects.requireNonNull(customerDataService);
+    }
 
     @PostConstruct
     public void initialize() {
-        thresholds = segmentationService.currentThresholds().thresholds().stream()
+        List<ThresholdInput> thresholds =
+                segmentationService.currentThresholds().thresholds().stream()
                 .map(ThresholdInput::new)
                 .toList();
+        state.setThresholds(thresholds);
+    }
+
+    public String preview() {
+        try {
+            SegmentationThresholds validated = validatedThresholds();
+            List<ThresholdInput> thresholds = validated.thresholds().stream()
+                    .map(ThresholdInput::new)
+                    .toList();
+            state.setThresholds(thresholds);
+
+            CustomerDataService.CustomerStatistics statistics =
+                    customerDataService.previewSegmentation(validated);
+            List<TierPreview> preview = Arrays.stream(CustomerTier.values())
+                    .map(tier -> new TierPreview(
+                            tier,
+                            statistics.tierCounts().getOrDefault(tier, 0L),
+                            percentage(statistics, tier)))
+                    .toList();
+            state.setPreview(preview, statistics.totalCustomers());
+
+            return "preview";
+        } catch (IllegalArgumentException exception) {
+            addMessage(
+                    FacesMessage.SEVERITY_ERROR,
+                    "Invalid thresholds",
+                    exception.getMessage());
+            return null;
+        }
     }
 
     public String review() {
-        try {
-            SegmentationThresholds validated = validatedThresholds();
-            thresholds = validated.thresholds().stream()
-                    .map(ThresholdInput::new)
-                    .toList();
-            return "review";
-        } catch (IllegalArgumentException exception) {
-            FacesContext.getCurrentInstance().addMessage(
-                    null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                            "Invalid thresholds",
-                            exception.getMessage()));
-            return null;
-        }
+        return "review";
     }
 
     public String execute() {
@@ -57,66 +90,69 @@ public class CustomerSegmentationFlow implements Serializable {
             SegmentationThresholds validated = validatedThresholds();
             long executionId = segmentationService.start(validated);
 
-            FacesContext context = FacesContext.getCurrentInstance();
-            context.getExternalContext().getFlash().setKeepMessages(true);
-            context.addMessage(
-                    null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO,
-                            "Segmentation started",
-                            "Batch execution %d started successfully".formatted(executionId)));
+            addMessage(
+                    FacesMessage.SEVERITY_INFO,
+                    "Segmentation started",
+                    "Batch execution %d started successfully".formatted(executionId),
+                    true);
 
             return "home";
         } catch (IllegalArgumentException | IllegalStateException exception) {
-            FacesContext.getCurrentInstance().addMessage(
-                    null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                            "Unable to start segmentation",
-                            exception.getMessage()));
+            addMessage(
+                    FacesMessage.SEVERITY_ERROR,
+                    "Unable to start segmentation",
+                    exception.getMessage());
             return null;
         }
     }
 
-    public List<ThresholdInput> getThresholds() {
-        return thresholds;
+    public CustomerSegmentationFlowState getState() {
+        return state;
     }
 
     private SegmentationThresholds validatedThresholds() {
-        List<SegmentationThreshold> values = thresholds.stream()
+        List<SegmentationThreshold> values = state.getThresholds().stream()
                 .map(ThresholdInput::toThreshold)
                 .toList();
         return new SegmentationThresholds(values);
     }
 
-    public static class ThresholdInput implements Serializable {
+    private double percentage(
+            CustomerDataService.CustomerStatistics statistics,
+            CustomerTier tier) {
 
-        @Serial
-        private static final long serialVersionUID = 1L;
-
-        private CustomerTier tier;
-        private BigDecimal minimumValue;
-
-        public ThresholdInput() {
+        if (statistics.totalCustomers() == 0) {
+            return 0;
         }
 
-        ThresholdInput(SegmentationThreshold threshold) {
-            tier = threshold.tier();
-            minimumValue = threshold.minimumValue();
-        }
+        long count = statistics.tierCounts().getOrDefault(tier, 0L);
+        return count * 100.0 / statistics.totalCustomers();
+    }
 
-        public CustomerTier getTier() {
-            return tier;
-        }
+    private void addMessage(
+            FacesMessage.Severity severity,
+            String summary,
+            String detail) {
 
-        public BigDecimal getMinimumValue() {
-            return minimumValue;
-        }
+        addMessage(severity, summary, detail, false);
+    }
 
-        public void setMinimumValue(BigDecimal minimumValue) {
-            this.minimumValue = minimumValue;
-        }
+    private void addMessage(
+            FacesMessage.Severity severity,
+            String summary,
+            String detail,
+            boolean keepAfterRedirect) {
 
-        SegmentationThreshold toThreshold() {
-            return new SegmentationThreshold(minimumValue, tier);
+        FacesContext context = currentFacesContext();
+        if (context != null) {
+            if (keepAfterRedirect) {
+                context.getExternalContext().getFlash().setKeepMessages(true);
+            }
+            context.addMessage(null, new FacesMessage(severity, summary, detail));
         }
+    }
+
+    FacesContext currentFacesContext() {
+        return FacesContext.getCurrentInstance();
     }
 }
