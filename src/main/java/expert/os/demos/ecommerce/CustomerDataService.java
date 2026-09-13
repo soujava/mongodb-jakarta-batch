@@ -1,6 +1,6 @@
 package expert.os.demos.ecommerce;
 
-import expert.os.demos.ecommerce.batch.SegmentationThresholds;
+import expert.os.demos.ecommerce.batch.CustomerSegmentationPolicy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.json.bind.Jsonb;
@@ -74,11 +74,11 @@ public class CustomerDataService {
         }
     }
 
-    public SegmentationPreview segmentationPreview(SegmentationThresholds thresholds) {
-        Objects.requireNonNull(thresholds, "thresholds are required");
+    public SegmentationPreview segmentationPreview(CustomerSegmentationPolicy policy) {
+        Objects.requireNonNull(policy, "policy is required");
 
         try (Stream<Customer> customers = customerRepository.findAll()) {
-            return calculatePreview(customers::iterator, thresholds);
+            return calculatePreview(customers::iterator, policy);
         }
     }
 
@@ -110,7 +110,7 @@ public class CustomerDataService {
 
     static SegmentationPreview calculatePreview(
             Iterable<Customer> customers,
-            SegmentationThresholds thresholds) {
+            CustomerSegmentationPolicy policy) {
 
         EnumMap<CustomerTier, Long> currentCounts = emptyTierCounts();
         EnumMap<CustomerTier, Long> projectedCounts = emptyTierCounts();
@@ -122,7 +122,7 @@ public class CustomerDataService {
                 currentCounts.merge(currentTier, 1L, Long::sum);
             }
 
-            CustomerTier projectedTier = thresholds.tierFor(customer.getTotalSpent());
+            CustomerTier projectedTier = policy.tierFor(customer.getTotalSpent());
             projectedCounts.merge(projectedTier, 1L, Long::sum);
             totalCustomers++;
         }
