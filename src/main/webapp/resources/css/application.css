@@ -1,0 +1,194 @@
+:root {
+    color-scheme: light;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f4f7fb;
+    color: #172033;
+}
+
+body {
+    margin: 0;
+    background: #f4f7fb;
+}
+
+.page-shell {
+    width: min(1180px, calc(100% - 2rem));
+    margin: 0 auto;
+}
+
+.hero {
+    padding: 3.5rem 0;
+    color: white;
+    background: linear-gradient(135deg, #111827, #1d4ed8);
+}
+
+.hero h1 {
+    margin: .35rem 0 .75rem;
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+}
+
+.hero p {
+    max-width: 700px;
+    margin: 0;
+    color: #dbeafe;
+    font-size: 1.1rem;
+}
+
+.eyebrow {
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.dashboard,
+.flow-page {
+    padding: 2rem 0 4rem;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 1rem 0 1.5rem;
+}
+
+.toolbar h2,
+.flow-header h1 {
+    margin: 0 0 .35rem;
+}
+
+.toolbar p,
+.flow-header p {
+    margin: 0;
+    color: #64748b;
+}
+
+.toolbar-actions,
+.flow-actions {
+    display: flex;
+    gap: .75rem;
+}
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.metric-card {
+    padding: 1.25rem;
+    border-top: 4px solid #2563eb;
+    border-radius: 14px;
+    background: white;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .07);
+}
+
+.metric-card strong {
+    display: block;
+    margin: .5rem 0;
+    font-size: 2rem;
+}
+
+.metric-label,
+.metric-detail {
+    color: #64748b;
+}
+
+.metric-card.bronze {
+    border-color: #a16207;
+}
+
+.metric-card.silver {
+    border-color: #94a3b8;
+}
+
+.metric-card.gold {
+    border-color: #eab308;
+}
+
+.metric-card.platinum {
+    border-color: #6366f1;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.panel-card,
+.flow-card {
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .07);
+}
+
+.chart-card .ui-card-content {
+    min-height: 340px;
+}
+
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.status-help {
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.flow-header {
+    margin-bottom: 1.5rem;
+}
+
+.flow-card .ui-card-content {
+    padding-top: .5rem;
+}
+
+.tier-name {
+    font-weight: 700;
+}
+
+.threshold-input {
+    width: 100%;
+}
+
+.review-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.flow-actions {
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .toolbar-actions,
+    .flow-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .metric-grid {
+        grid-template-columns: 1fr;
+    }
+}
