@@ -16,7 +16,7 @@
         </view>
 
         <flow-return id="home">
-            <from-outcome>/index.xhtml?faces-redirect=true</from-outcome>
+            <from-outcome>/index?faces-redirect=true</from-outcome>
         </flow-return>
     </flow-definition>
 </faces-config>
