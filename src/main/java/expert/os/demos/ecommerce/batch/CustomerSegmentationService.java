@@ -24,27 +24,27 @@ public class CustomerSegmentationService {
     public static final String JOB_NAME = "customer-segmentation";
     private static final String DEFAULT_THRESHOLDS = "/segmentation-thresholds.json";
 
-    private volatile SegmentationThresholds currentThresholds;
+    private volatile CustomerSegmentationPolicy currentPolicy;
 
     @PostConstruct
     void initialize() {
-        currentThresholds = loadDefaultThresholds();
+        currentPolicy = loadDefaultPolicy();
     }
 
-    public SegmentationThresholds currentThresholds() {
-        return currentThresholds;
+    public CustomerSegmentationPolicy currentPolicy() {
+        return currentPolicy;
     }
 
-    public long start(SegmentationThresholds thresholds) {
+    public long start(CustomerSegmentationPolicy policy) {
         if (isRunning()) {
             throw new IllegalStateException("A customer segmentation batch is already running");
         }
 
         Properties parameters = new Properties();
-        parameters.setProperty(SegmentationThresholds.JOB_PARAMETER, thresholds.toJson());
+        parameters.setProperty(CustomerSegmentationPolicy.JOB_PARAMETER, policy.toJson());
 
         long executionId = jobOperator().start(JOB_NAME, parameters);
-        currentThresholds = thresholds;
+        currentPolicy = policy;
         return executionId;
     }
 
@@ -73,7 +73,7 @@ public class CustomerSegmentationService {
         }
     }
 
-    private SegmentationThresholds loadDefaultThresholds() {
+    private CustomerSegmentationPolicy loadDefaultPolicy() {
         try (InputStream stream =
                      CustomerSegmentationService.class.getResourceAsStream(DEFAULT_THRESHOLDS)) {
 
@@ -82,7 +82,7 @@ public class CustomerSegmentationService {
             }
 
             String json = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-            return SegmentationThresholds.fromJson(json);
+            return CustomerSegmentationPolicy.fromJson(json);
         } catch (IOException exception) {
             throw new UncheckedIOException(
                     "Unable to load default segmentation thresholds", exception);
