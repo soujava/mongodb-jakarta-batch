@@ -47,19 +47,34 @@
                     </p:dataTable>
                 </p:panel>
 
-                <p:panel header="Expected distribution" styleClass="flow-card">
-                    <p:dataTable value="#{customerSegmentationFlow.state.preview}"
-                                 var="tierPreview"
-                                 rowKey="#{tierPreview.tier}">
+                <p:panel header="Before / after summary" styleClass="flow-card">
+                    <p:dataTable value="#{customerSegmentationFlow.state.comparisons}"
+                                 var="comparison"
+                                 rowKey="#{comparison.tier}">
                         <p:column headerText="Tier">
-                            <span class="tier-name">#{tierPreview.tier}</span>
+                            <span class="tier-name">#{comparison.tier}</span>
                         </p:column>
 
-                        <p:column headerText="Distribution">
-                            <h:outputText value="#{tierPreview.percentage}">
+                        <p:column headerText="Current">
+                            <strong>#{comparison.currentCount}</strong> /
+                            <h:outputText value="#{comparison.currentPercentage}">
                                 <f:convertNumber minFractionDigits="1"
                                                  maxFractionDigits="1"/>
                             </h:outputText>%
+                        </p:column>
+
+                        <p:column headerText="Projected">
+                            <strong>#{comparison.projectedCount}</strong> /
+                            <h:outputText value="#{comparison.projectedPercentage}">
+                                <f:convertNumber minFractionDigits="1"
+                                                 maxFractionDigits="1"/>
+                            </h:outputText>%
+                        </p:column>
+
+                        <p:column headerText="Change">
+                            <span class="change-value #{comparison.changeStyleClass}">
+                                #{comparison.formattedChange}
+                            </span>
                         </p:column>
                     </p:dataTable>
                 </p:panel>
